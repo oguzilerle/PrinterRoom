@@ -7,17 +7,33 @@ public class PrinterRoom
 {
     private class Printer implements Runnable
     {
-        // TODO: Implement
-        // ....
+        IMPMCQueue<PrintItem> queue;
+        private int id;
 
         public Printer(int id, IMPMCQueue<PrintItem> roomQueue)
         {
-            // TODO: Implement
+            this.queue = roomQueue;
+            this.id = id;
+            SyncLogger.Instance().Log(SyncLogger.ThreadType.CONSUMER, id,
+                                      String.format(SyncLogger.FORMAT_PRINTER_LAUNCH, id));
         }
 
         @Override
         public void run() {
-
+            while (true)
+            {
+                try {
+                    PrintItem item = queue.Consume();
+                    item.print();
+                    SyncLogger.Instance().Log(SyncLogger.ThreadType.CONSUMER, id,
+                            String.format(SyncLogger.FORMAT_PRINT_DONE, item));
+                }
+                catch (QueueIsClosedExecption e) {
+                    break;
+                }
+            }
+            SyncLogger.Instance().Log(SyncLogger.ThreadType.CONSUMER, id,
+                    String.format(SyncLogger.FORMAT_TERMINATING, id));
         }
     }
 
@@ -40,11 +56,23 @@ public class PrinterRoom
     public boolean SubmitPrint(PrintItem item, int producerId)
     {
         // TODO: Implement
+        try {
+            SyncLogger.Instance().Log(SyncLogger.ThreadType.PRODUCER, producerId,
+                    String.format(SyncLogger.FORMAT_ADD, item));
+            roomQueue.Add(item);
+        }
+        catch (QueueIsClosedExecption e)
+        {
+            SyncLogger.Instance().Log(SyncLogger.ThreadType.PRODUCER, producerId,
+                    String.format(SyncLogger.FORMAT_ROOM_CLOSED, item));
+            return false;
+        }
         return false;
     }
 
     public void CloseRoom()
     {
         // TODO: Implement
+        roomQueue.CloseQueue();
     }
 }

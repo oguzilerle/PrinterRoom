@@ -1,8 +1,13 @@
-public class PrintItem
+public class PrintItem implements Comparable<PrintItem>
 {
     private int         printDuration; // in milliseconds
     private PrintType   type;
     private int         id;
+
+    @Override
+    public int compareTo(PrintItem o) {
+        return this.id - o.id;
+    }
 
     public enum PrintType
     {

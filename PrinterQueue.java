@@ -12,45 +12,44 @@ public class PrinterQueue implements IMPMCQueue<PrintItem>
     private ReentrantLock queueLock;
     private Semaphore entryLock;
     private int lengthOfQueue;
-
     private boolean isClosed;
     public PrinterQueue(int maxElementCount)
     {
         // TODO: Implement
-        teachersQueue = new PriorityQueue<>(maxElementCount);
-        studentsQueue = new PriorityQueue<>(maxElementCount);
+        this.teachersQueue = new PriorityQueue<>(maxElementCount);
+        this.studentsQueue = new PriorityQueue<>(maxElementCount);
 
-        queueLock = new ReentrantLock();
-        entryLock = new Semaphore(maxElementCount, true);
+        this.queueLock = new ReentrantLock();
+        this.entryLock = new Semaphore(maxElementCount, true);
 
-        lengthOfQueue = 0;
-        isClosed = false;
+        this.lengthOfQueue = 0;
+        this.isClosed = false;
     }
 
     @Override
     public void Add(PrintItem data) throws QueueIsClosedExecption {
         if (isClosed) throw new QueueIsClosedExecption();
         try {
-            entryLock.acquire();
-            queueLock.lock();
-            if (data.getPrintType() == PrintItem.PrintType.INSTRUCTOR) teachersQueue.add(data);
-            else studentsQueue.add(data);
-            lengthOfQueue += 1;
+            this.entryLock.acquire();
+            this.queueLock.lock();
+            if (data.getPrintType() == PrintItem.PrintType.INSTRUCTOR) this.teachersQueue.add(data);
+            else this.studentsQueue.add(data);
+            this.lengthOfQueue += 1;
 
         }
         catch (InterruptedException e) {}
         finally {
-            queueLock.unlock();
+            this.queueLock.unlock();
         }
     }
 
     @Override
     public PrintItem Consume() throws QueueIsClosedExecption {
 
-        queueLock.lock();
+        this.queueLock.lock();
         if (isClosed && lengthOfQueue == 0)
         {
-            queueLock.unlock();
+            this.queueLock.unlock();
             throw new QueueIsClosedExecption();
         }
         PrintItem removed;
@@ -64,15 +63,15 @@ public class PrinterQueue implements IMPMCQueue<PrintItem>
 
     @Override
     public int RemainingSize() {
-        queueLock.lock();
-        int size = lengthOfQueue;
-        queueLock.unlock();
+        this.queueLock.lock();
+        int size = this.lengthOfQueue;
+        this.queueLock.unlock();
         return size;
     }
 
     @Override
     public void CloseQueue()
     {
-        isClosed = true;
+        this.isClosed = true;
     }
 }

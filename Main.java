@@ -4,10 +4,13 @@ public class Main
    {
 
        // TODO: You may want to implement this class to test your code
+       IMPMCQueue<PrintItem> queue;
+
 
        public void join()
        {
            // TODO: Provide a thread join functionality for the main thread
+           
        }
 
        @Override
@@ -24,6 +27,7 @@ public class Main
             PrintItem item0 = new PrintItem(100, PrintItem.PrintType.STUDENT, 0);
             PrintItem item1 = new PrintItem(50, PrintItem.PrintType.INSTRUCTOR,1);
             PrintItem item2 = new PrintItem(66, PrintItem.PrintType.STUDENT, 2);
+
             if(!room.SubmitPrint(item0, 0))
             {
                 SyncLogger.Instance().Log(SyncLogger.ThreadType.PRODUCER, 0,
