@@ -6,7 +6,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class PrinterQueue implements IMPMCQueue<PrintItem>
 {
-    // TODO: This is all yours
     Queue<PrintItem> teachersQueue;
     Queue<PrintItem> studentsQueue;
 
@@ -14,8 +13,6 @@ public class PrinterQueue implements IMPMCQueue<PrintItem>
     private Semaphore entryLock;
     private int lengthOfQueue;
     private boolean isClosed;
-
-    private Condition queueIsFull;
     private Condition queueIsEmpty;
     public PrinterQueue(int maxElementCount)
     {
@@ -26,7 +23,6 @@ public class PrinterQueue implements IMPMCQueue<PrintItem>
         this.queueLock = new ReentrantLock();
         this.entryLock = new Semaphore(maxElementCount, true);
 
-        queueIsFull = queueLock.newCondition();
         queueIsEmpty = queueLock.newCondition();
 
         this.lengthOfQueue = 0;
@@ -35,14 +31,16 @@ public class PrinterQueue implements IMPMCQueue<PrintItem>
 
     @Override
     public void Add(PrintItem data) throws QueueIsClosedExecption {
-        if (isClosed) throw new QueueIsClosedExecption();
         try {
             this.entryLock.acquire();
             this.queueLock.lock();
+
             if (isClosed) throw new QueueIsClosedExecption();
+
             if (data.getPrintType() == PrintItem.PrintType.INSTRUCTOR) this.teachersQueue.add(data);
             else this.studentsQueue.add(data);
-            this.lengthOfQueue += 1;
+
+            this.lengthOfQueue++;
             this.queueIsEmpty.signal();
         }
         catch (InterruptedException e) {}
@@ -73,9 +71,11 @@ public class PrinterQueue implements IMPMCQueue<PrintItem>
             }
             catch (InterruptedException e) {}
         }
+
         if (teachersQueue.isEmpty() && !studentsQueue.isEmpty()) removed = studentsQueue.remove();
         else removed = teachersQueue.remove();
-        lengthOfQueue -= 1;
+
+        lengthOfQueue--;
         if (isClosed)
         {
             for (int i = 0; i < entryLock.getQueueLength(); i++)

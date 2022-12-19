@@ -5,8 +5,11 @@ public class PrintItem implements Comparable<PrintItem>
     private int         id;
 
     @Override
-    public int compareTo(PrintItem o) {
-        return this.id - o.id;
+    public int compareTo(PrintItem o)
+    {
+        if (PrintType.INSTRUCTOR == o.getPrintType() && PrintType.STUDENT == this.getPrintType()) return -1;
+        else if (PrintType.STUDENT == o.getPrintType() && PrintType.INSTRUCTOR == this.getPrintType()) return 1;
+        else return 0;
     }
 
     public enum PrintType
