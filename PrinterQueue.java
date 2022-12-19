@@ -76,16 +76,22 @@ public class PrinterQueue implements IMPMCQueue<PrintItem>
         if (teachersQueue.isEmpty() && !studentsQueue.isEmpty()) removed = studentsQueue.remove();
         else removed = teachersQueue.remove();
         lengthOfQueue -= 1;
-        entryLock.release();
+        if (isClosed)
+        {
+            for (int i = 0; i < entryLock.getQueueLength(); i++)
+            {
+                this.entryLock.release();
+            }
+        }
+        else this.entryLock.release();
+
         queueLock.unlock();
         return removed;
     }
 
     @Override
     public int RemainingSize() {
-        this.queueLock.lock();
         int size = this.lengthOfQueue;
-        this.queueLock.unlock();
         return size;
     }
 

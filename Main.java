@@ -1,101 +1,104 @@
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.ArrayList;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Main
 {
    static class Producer implements Runnable
    {
-
        // TODO: You may want to implement this class to test your code
+       private final int jobsToSubmit;
+       private final int sleepDuration;
+       private final int id;
+       private final float studentJobProbability;
+       private final int jobBaseDurationInMs;
        private PrinterRoom room;
-       private int producerID;
 
-       private PrintItem.PrintType type;
+       private Thread myThread;
 
-         public Producer(PrinterRoom room, int id, PrintItem.PrintType type)
-         {
-              this.room = room;
-              this.producerID = id;
-              this.type = type;
-             SyncLogger.Instance().Log(SyncLogger.ThreadType.PRODUCER, producerID,
-                     String.format(SyncLogger.FORMAT_PRODUCER_LAUNCH, producerID));
-         }
+       public Producer(PrinterRoom room, int id, int jobCount, int sleepDur, int jobBaseDurationInMs, float studentJobProb){
+           this.room = room;
+           this.id = id;
+           this.jobsToSubmit  = jobCount;
+           this.sleepDuration = sleepDur;
+           this.studentJobProbability = studentJobProb;
+           this.jobBaseDurationInMs = jobBaseDurationInMs;
+           SyncLogger.Instance().Log(SyncLogger.ThreadType.PRODUCER, id, "Created");
+
+           myThread = new Thread(this);
+           myThread.start();
+       }
+
+       public void join()
+       {
+           // TODO: Provide a thread join functionality for the main thread
+           try {
+               myThread.join();
+           } catch (InterruptedException e) {
+           }
+       }
 
        @Override
        public void run() {
-            while (true)
-            {
-                PrintItem item = new PrintItem(new Random().nextInt(1000), type, producerID);
-                if(!room.SubmitPrint(item, producerID))
-                {
-                    SyncLogger.Instance().Log(SyncLogger.ThreadType.PRODUCER, producerID,
-                            String.format(SyncLogger.FORMAT_ROOM_CLOSED, item));
-                    break;
-                }
-            }
-            SyncLogger.Instance().Log(SyncLogger.ThreadType.PRODUCER, producerID,
-                    String.format(SyncLogger.FORMAT_TERMINATING, producerID));
+           int submittedCount = 0;
+
+           try {
+               Thread.sleep((long)(sleepDuration));
+           } catch (InterruptedException e) {}
+
+           while(submittedCount < jobsToSubmit)
+           {
+               float rand = ThreadLocalRandom.current().nextFloat(0.0f, 1.0f);
+               var type = PrintItem.PrintType.INSTRUCTOR;
+               if(rand < studentJobProbability){
+                   type = PrintItem.PrintType.STUDENT;
+               }
+
+               float perctOffset = ThreadLocalRandom.current().nextFloat(-0.25f, 1.5f);
+               int offset = (int)Math.floor(jobBaseDurationInMs * perctOffset);
+
+               PrintItem itemToSubmit = new PrintItem(jobBaseDurationInMs + offset, type, id);
+               if(room.SubmitPrint(itemToSubmit, id)){
+//                   SyncLogger.Instance().Log(SyncLogger.ThreadType.PRODUCER, id, "_dork_ SUBMITTED " + itemToSubmit);
+                   submittedCount++;
+               }
+               else{
+                   // room was closed, decide what to do.
+                   // this basic imp just terminates. can try adding few more for further testing.
+                   SyncLogger.Instance().Log(SyncLogger.ThreadType.PRODUCER, id, String.format(SyncLogger.FORMAT_ROOM_CLOSED, itemToSubmit));
+                   break;
+               }
+               try {
+                   Thread.sleep((long)(sleepDuration));
+               } catch (InterruptedException e) {}
+           }
+
+           SyncLogger.Instance().Log(SyncLogger.ThreadType.PRODUCER, id, "Producer: " + id + " is terminating.");
        }
    }
 
     public static void main(String args[]) throws InterruptedException
     {
-        PrinterRoom room = new PrinterRoom(2, 8);
-        List<Producer> producers = new ArrayList<>();
+        PrinterRoom room = new PrinterRoom(5, 5);
 
-        for (int i = 0; i < 10; i++) {
-            PrintItem.PrintType type = (i % 2 == 0) ? PrintItem.PrintType.STUDENT : PrintItem.PrintType.INSTRUCTOR;
-            producers.add(new Producer(room, i, type));
+        int producerCount = 6;
+        ArrayList<Producer> producers = new ArrayList<>();
+        for(int i = 0; i < producerCount; i +=2){
+            producers.add(new Producer(room, i, 10, 100*(i+1), 1000,0.70f));
+            producers.add(new Producer(room, i+1, 10, 500, 200,0.15f));
         }
 
-        for (Producer p : producers) {
-            new Thread(p).start();
-        }
-        /*
-        List<PrintItem> items = new ArrayList<>();
-        while(true)
-        {
-            /*Producer p1 = new Producer(room, 1, PrintItem.PrintType.STUDENT);
-            Producer p2 = new Producer(room, 2, PrintItem.PrintType.INSTRUCTOR);
+        int roomCloseDelayInSeconds = 15;
+        Thread.sleep((long)(roomCloseDelayInSeconds * 1000));
 
-            producers.add(p1);
-            producers.add(p2);
-
-            for (Producer p : producers) {
-                new Thread(p).start();
-            }*//*
-            items.add(new PrintItem(1000, PrintItem.PrintType.STUDENT, 1));
-            items.add(new PrintItem(1000, PrintItem.PrintType.STUDENT, 2));
-            items.add(new PrintItem(1000, PrintItem.PrintType.INSTRUCTOR, 3));
-            items.add(new PrintItem(1000, PrintItem.PrintType.STUDENT, 4));
-            items.add(new PrintItem(1000, PrintItem.PrintType.STUDENT, 5));
-            items.add(new PrintItem(1000, PrintItem.PrintType.INSTRUCTOR, 6));
-            items.add(new PrintItem(1000, PrintItem.PrintType.STUDENT, 7));
-            items.add(new PrintItem(1000, PrintItem.PrintType.STUDENT, 8));
-            items.add(new PrintItem(1000, PrintItem.PrintType.INSTRUCTOR, 9));
-            items.add(new PrintItem(1000, PrintItem.PrintType.STUDENT, 10));
-            items.add(new PrintItem(1000, PrintItem.PrintType.STUDENT, 11));
-
-            for (PrintItem item : items) {
-                if (!room.SubmitPrint(item, item.getId())) {
-                    break;
-                }
-                Thread.sleep((long)(200));
-            }
-            break;
-        }*/
-
-        // Wait a little we are doing produce on the same thread that will do the close
-        // actual tests won't do this.
-        Thread.sleep((long)(3 * 1000));
         // Log before close
-        SyncLogger.Instance().Log(SyncLogger.ThreadType.MAIN_THREAD, 0,
-                                  "Closing Room");
+        SyncLogger.Instance().Log(SyncLogger.ThreadType.MAIN_THREAD, 0, "Closing Room");
         room.CloseRoom();
 
-        // This should print only after all elements are closed (here we wait 3 seconds so it should be immediate)
-        SyncLogger.Instance().Log(SyncLogger.ThreadType.MAIN_THREAD, 0,
-                                  "Room is Closed");
+        for (var prod: producers) {
+            prod.join();
+        }
+
+        // original comment: This should print only after all elements are closed (here we wait 3 seconds so it should be immediate)
+        SyncLogger.Instance().Log(SyncLogger.ThreadType.MAIN_THREAD, 0, "Room is Closed");
     }
 }
