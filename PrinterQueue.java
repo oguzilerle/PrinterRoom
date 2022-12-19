@@ -1,6 +1,7 @@
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class PrinterQueue implements IMPMCQueue<PrintItem>
@@ -13,6 +14,9 @@ public class PrinterQueue implements IMPMCQueue<PrintItem>
     private Semaphore entryLock;
     private int lengthOfQueue;
     private boolean isClosed;
+
+    private Condition queueIsFull;
+    private Condition queueIsEmpty;
     public PrinterQueue(int maxElementCount)
     {
         // TODO: Implement
@@ -21,6 +25,9 @@ public class PrinterQueue implements IMPMCQueue<PrintItem>
 
         this.queueLock = new ReentrantLock();
         this.entryLock = new Semaphore(maxElementCount, true);
+
+        queueIsFull = queueLock.newCondition();
+        queueIsEmpty = queueLock.newCondition();
 
         this.lengthOfQueue = 0;
         this.isClosed = false;
@@ -35,7 +42,7 @@ public class PrinterQueue implements IMPMCQueue<PrintItem>
             if (data.getPrintType() == PrintItem.PrintType.INSTRUCTOR) this.teachersQueue.add(data);
             else this.studentsQueue.add(data);
             this.lengthOfQueue += 1;
-
+            this.queueIsEmpty.signal();
         }
         catch (InterruptedException e) {}
         finally {
@@ -53,7 +60,19 @@ public class PrinterQueue implements IMPMCQueue<PrintItem>
             throw new QueueIsClosedExecption();
         }
         PrintItem removed;
-        if (teachersQueue.isEmpty()) removed = studentsQueue.remove();
+        if (this.teachersQueue.isEmpty() && this.studentsQueue.isEmpty())
+        {
+            try {
+                this.queueIsEmpty.await();
+                if (isClosed && lengthOfQueue == 0)
+                {
+                    this.queueLock.unlock();
+                    throw new QueueIsClosedExecption();
+                }
+            }
+            catch (InterruptedException e) {}
+        }
+        if (teachersQueue.isEmpty() && !studentsQueue.isEmpty()) removed = studentsQueue.remove();
         else removed = teachersQueue.remove();
         lengthOfQueue -= 1;
         entryLock.release();
@@ -72,6 +91,9 @@ public class PrinterQueue implements IMPMCQueue<PrintItem>
     @Override
     public void CloseQueue()
     {
+        this.queueLock.lock();
         this.isClosed = true;
+        this.queueIsEmpty.signalAll();
+        this.queueLock.unlock();
     }
 }

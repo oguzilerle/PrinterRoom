@@ -6,6 +6,9 @@ public class Main
        // TODO: You may want to implement this class to test your code
        IMPMCQueue<PrintItem> queue;
 
+         public Producer(IMPMCQueue<PrintItem> queue) {
+              this.queue = queue;
+         }
 
        public void join()
        {

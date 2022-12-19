@@ -51,6 +51,10 @@ public class PrinterRoom
                                                          .mapToObj(i -> new Printer(i, roomQueue))
                                                          .collect(Collectors.toList()));
         // Printers are launched using the same queue
+
+        for (Printer p : printers) {
+            new Thread(p).start();
+        }
     }
 
     public boolean SubmitPrint(PrintItem item, int producerId)
@@ -60,6 +64,7 @@ public class PrinterRoom
             SyncLogger.Instance().Log(SyncLogger.ThreadType.PRODUCER, producerId,
                     String.format(SyncLogger.FORMAT_ADD, item));
             roomQueue.Add(item);
+            return true;
         }
         catch (QueueIsClosedExecption e)
         {
@@ -67,7 +72,6 @@ public class PrinterRoom
                     String.format(SyncLogger.FORMAT_ROOM_CLOSED, item));
             return false;
         }
-        return false;
     }
 
     public void CloseRoom()
