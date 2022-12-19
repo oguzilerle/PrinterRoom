@@ -39,6 +39,7 @@ public class PrinterQueue implements IMPMCQueue<PrintItem>
         try {
             this.entryLock.acquire();
             this.queueLock.lock();
+            if (isClosed) throw new QueueIsClosedExecption();
             if (data.getPrintType() == PrintItem.PrintType.INSTRUCTOR) this.teachersQueue.add(data);
             else this.studentsQueue.add(data);
             this.lengthOfQueue += 1;

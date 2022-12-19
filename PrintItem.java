@@ -15,6 +15,10 @@ public class PrintItem implements Comparable<PrintItem>
         STUDENT
     };
 
+    public int getId() {
+        return id;
+    }
+
     public PrintItem(int printDuration, PrintType t, int id)
     {
         this.printDuration = printDuration;

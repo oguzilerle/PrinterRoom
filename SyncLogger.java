@@ -62,12 +62,13 @@ public class SyncLogger
     }
 
     // Format String to prevent print mistakes
-    public static final String FORMAT_PRINTER_LAUNCH    = "Printer %d is launched.";
-    public static final String FORMAT_PRODUCER_LAUNCH   = "Creating Producer %d";
-    public static final String FORMAT_PRINT_DONE        = "Printing        %s is done!";
-    public static final String FORMAT_ADD               = "Trying to Add   %s";
-    public static final String FORMAT_ROOM_CLOSED       = "Room is closed, %s is skipped!";
-    public static final String FORMAT_TERMINATING       = "Terminating...";
+    public static final String FORMAT_PRINTER_LAUNCH    = "Printer %d is launched."; // PRINTER YARATILIRKEN
+
+    public static final String FORMAT_PRODUCER_LAUNCH   = "Creating Producer %d"; // PRODUCER YARATILIRKEN
+    public static final String FORMAT_PRINT_DONE        = "Printing        %s is done!"; // IF CONSUME SUCCESFUL
+    public static final String FORMAT_ADD               = "Trying to Add   %s"; // WHEN SUBMITPRINT CALLED
+    public static final String FORMAT_ROOM_CLOSED       = "Room is closed, %s is skipped!"; // WHEN QUEUE IS CLOSED
+    public static final String FORMAT_TERMINATING       = "Terminating..."; // when killing every thread
 
     public void Log(ThreadType t, int uniqueId, String s)
     {

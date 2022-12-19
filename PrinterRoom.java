@@ -7,14 +7,14 @@ public class PrinterRoom
 {
     private class Printer implements Runnable
     {
-        IMPMCQueue<PrintItem> queue;
+        private IMPMCQueue<PrintItem> queue;
         private int id;
 
         public Printer(int id, IMPMCQueue<PrintItem> roomQueue)
         {
             this.queue = roomQueue;
             this.id = id;
-            SyncLogger.Instance().Log(SyncLogger.ThreadType.CONSUMER, id,
+            SyncLogger.Instance().Log(SyncLogger.ThreadType.MAIN_THREAD, id,
                                       String.format(SyncLogger.FORMAT_PRINTER_LAUNCH, id));
         }
 
@@ -29,11 +29,11 @@ public class PrinterRoom
                             String.format(SyncLogger.FORMAT_PRINT_DONE, item));
                 }
                 catch (QueueIsClosedExecption e) {
+                    SyncLogger.Instance().Log(SyncLogger.ThreadType.CONSUMER, id,
+                            String.format(SyncLogger.FORMAT_TERMINATING, id));
                     break;
                 }
             }
-            SyncLogger.Instance().Log(SyncLogger.ThreadType.CONSUMER, id,
-                    String.format(SyncLogger.FORMAT_TERMINATING, id));
         }
     }
 
@@ -42,16 +42,10 @@ public class PrinterRoom
 
     public PrinterRoom(int printerCount, int maxElementCount)
     {
-        // Instantiating the shared queue
         roomQueue = new PrinterQueue(maxElementCount);
-
-        // Let's try streams
-        // Printer creation automatically launches its thread
         printers = Collections.unmodifiableList(IntStream.range(0, printerCount)
                                                          .mapToObj(i -> new Printer(i, roomQueue))
                                                          .collect(Collectors.toList()));
-        // Printers are launched using the same queue
-
         for (Printer p : printers) {
             new Thread(p).start();
         }
