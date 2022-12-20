@@ -53,10 +53,10 @@ public class PrinterRoom
 
     public boolean SubmitPrint(PrintItem item, int producerId)
     {
+        SyncLogger.Instance().Log(SyncLogger.ThreadType.PRODUCER, producerId,
+                String.format(SyncLogger.FORMAT_ADD, item));
         // TODO: Implement
         try {
-            SyncLogger.Instance().Log(SyncLogger.ThreadType.PRODUCER, producerId,
-                    String.format(SyncLogger.FORMAT_ADD, item));
             roomQueue.Add(item);
             return true;
         }
