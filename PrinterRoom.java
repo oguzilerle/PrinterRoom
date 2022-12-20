@@ -24,9 +24,9 @@ public class PrinterRoom
             {
                 try {
                     PrintItem item = queue.Consume();
-                    item.print();
                     SyncLogger.Instance().Log(SyncLogger.ThreadType.CONSUMER, id,
                             String.format(SyncLogger.FORMAT_PRINT_DONE, item));
+                    item.print();
                 }
                 catch (QueueIsClosedExecption e) {
                     SyncLogger.Instance().Log(SyncLogger.ThreadType.CONSUMER, id,

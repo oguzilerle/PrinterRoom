@@ -15,7 +15,7 @@ public class Main
               this.room = room;
               this.producerID = id;
               this.type = type;
-             SyncLogger.Instance().Log(SyncLogger.ThreadType.PRODUCER, producerID,
+             SyncLogger.Instance().Log(SyncLogger.ThreadType.MAIN_THREAD, producerID,
                      String.format(SyncLogger.FORMAT_PRODUCER_LAUNCH, producerID));
          }
 
@@ -36,7 +36,7 @@ public class Main
 
     public static void main(String args[]) throws InterruptedException
     {
-        PrinterRoom room = new PrinterRoom(4, 8);
+        PrinterRoom room = new PrinterRoom(10, 10);
         List<Producer> producers = new ArrayList<>();
 
         for (int i = 0; i < 4; i++) {

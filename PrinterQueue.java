@@ -91,8 +91,7 @@ public class PrinterQueue implements IMPMCQueue<PrintItem>
 
     @Override
     public int RemainingSize() {
-        int size = this.lengthOfQueue;
-        return size;
+        return this.entryLock.availablePermits();
     }
 
     @Override
